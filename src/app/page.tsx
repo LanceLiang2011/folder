@@ -1,9 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { analyzeFileName } from "./actions";
+import { useFormState, useFormStatus } from "react-dom";
+import OpenaiButton from "./components/openai-button";
 
 export default function Home() {
   const [folderData, setFolderData] = useState([]);
+  const [csvUrl, setCsvUrl] = useState<string | null>(null);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -43,7 +46,45 @@ export default function Home() {
     }
   };
 
-  const analyzeFileNameWithData = analyzeFileName.bind(null, folderData);
+  // Function to convert JSON to CSV
+  const jsonToCsv = (jsonData: any) => {
+    const items = jsonData.events;
+    if (!items || items.length === 0) {
+      return "";
+    }
+    const header = Object.keys(items[0]);
+    const csv = [
+      header.join(","), // header row first
+      ...items.map((row: any) =>
+        header
+          .map((fieldName) =>
+            JSON.stringify(row[fieldName]).replace(/^"|"$/g, "")
+          )
+          .join(",")
+      ),
+    ].join("\r\n");
+
+    return csv;
+  };
+
+  const [state, formAction] = useFormState(analyzeFileName, {
+    message: "",
+  });
+
+  // Effect to generate CSV URL when state.message changes
+  useEffect(() => {
+    if (state.message) {
+      try {
+        const jsonData = JSON.parse(state.message);
+        const csvData = jsonToCsv(jsonData);
+        const blob = new Blob([csvData], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        setCsvUrl(url);
+      } catch (err) {
+        console.error("Error parsing JSON or generating CSV:", err);
+      }
+    }
+  }, [state.message]);
 
   return (
     <div>
@@ -56,11 +97,20 @@ export default function Home() {
         {error && <p style={{ color: "red" }}>{error}</p>}
         <br />
         <br />
-        <form action={analyzeFileNameWithData}>
-          <button type="submit" disabled={uploading}>
-            交给OpenAI分析
-          </button>
+        <form action={formAction}>
+          <input
+            type="hidden"
+            name="files"
+            value={JSON.stringify(folderData.map((f: any) => f.name))}
+          />
+          <OpenaiButton uploading={uploading} />
         </form>
+        {csvUrl && (
+          <a href={csvUrl} download="events.csv">
+            下载CSV文件
+          </a>
+        )}
+        {state.message && <p>{state.message}</p>}
         <p>共{folderData.length}个文件夹</p>
         <pre>{JSON.stringify(folderData, null, 2)}</pre>
       </main>
