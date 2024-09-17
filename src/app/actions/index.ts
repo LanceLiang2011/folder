@@ -9,6 +9,10 @@ export async function analyzeFileName(prevState: any, formData: FormData) {
 
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+  if (!OPENAI_API_KEY) {
+    throw new Error("Missing OpenAI API key in environment variables");
+  }
+
   const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
   const OutcomeEvent = z.object({
@@ -22,7 +26,7 @@ export async function analyzeFileName(prevState: any, formData: FormData) {
   });
 
   const systemMessage =
-    "You will be given a list of filenames with date and location, followed by people involved, cause of the event, optionally outcome (镇压) and TikTok account in Chinese. Please extract location, people involved and cause of the event in the JSON format";
+    "You will be given a list of filenames with date and location, followed by people involved, cause of the event, optionally outcome (镇压) and TikTok account in Chinese. Please extract location, people involved and cause of the event in the JSON format. Please keep the full name of location, people involved and cause, do not truncate.";
 
   const completion = await openai.beta.chat.completions.parse({
     model: "gpt-4o-2024-08-06",
