@@ -22,8 +22,8 @@ export default function Home() {
       // Open directory picker
       const dirHandle = await window.showDirectoryPicker();
       const folders: any = [];
-      // Start recursive traversal
-      await traverseDirectory(dirHandle, "", folders);
+      // Collect immediate subdirectories
+      await collectImmediateSubdirectories(dirHandle, folders);
       setFolderData(folders);
     } catch (err: any) {
       setError(err.message);
@@ -33,15 +33,14 @@ export default function Home() {
     }
   };
 
-  const traverseDirectory = async (dirHandle: any, path: any, folders: any) => {
-    // Add current directory to the folders list
-    const currentPath = path ? `${path}/${dirHandle.name}` : dirHandle.name;
-    folders.push({ name: dirHandle.name, path: currentPath });
-
+  const collectImmediateSubdirectories = async (
+    dirHandle: any,
+    folders: any
+  ) => {
     for await (const [name, handle] of dirHandle.entries()) {
       if (handle.kind === "directory") {
-        // Recurse into subdirectory
-        await traverseDirectory(handle, currentPath, folders);
+        // Add immediate subdirectory to the folders list
+        folders.push({ name: handle.name, path: handle.name });
       }
     }
   };
