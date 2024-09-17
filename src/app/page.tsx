@@ -5,8 +5,10 @@ import { analyzeFileName } from "./actions";
 export default function Home() {
   const [folderData, setFolderData] = useState([]);
   const [error, setError] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const handlePickFolder = async () => {
+    setUploading(true);
     try {
       // Check if the browser supports the File System Access API
       if (!window.showDirectoryPicker) {
@@ -23,6 +25,8 @@ export default function Home() {
     } catch (err: any) {
       setError(err.message);
       console.error("Error picking directory:", err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -44,12 +48,21 @@ export default function Home() {
   return (
     <div>
       <main>
-        <button onClick={handlePickFolder}>Select Folder</button>
+        {!uploading && <p>选择一个文件夹，获得全部子文件夹的名称和路径</p>}
+        {uploading && <p>正在上传...</p>}
+        <button disabled={uploading} onClick={handlePickFolder}>
+          选择文档
+        </button>
         {error && <p style={{ color: "red" }}>{error}</p>}
-        <pre>{JSON.stringify(folderData, null, 2)}</pre>
+        <br />
+        <br />
         <form action={analyzeFileNameWithData}>
-          <button type="submit">Submit</button>
+          <button type="submit" disabled={uploading}>
+            交给OpenAI分析
+          </button>
         </form>
+        <p>共{folderData.length}个文件夹</p>
+        <pre>{JSON.stringify(folderData, null, 2)}</pre>
       </main>
       <footer>@LanceXLiang</footer>
     </div>
