@@ -38,5 +38,7 @@ export async function analyzeFileName(prevState: any, formData: FormData) {
 
   const responseText = completion.choices[0]?.message.content;
 
+  console.log({ responseText });
+
   return { message: responseText };
 }
