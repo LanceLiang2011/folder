@@ -1,9 +1,7 @@
 "use server";
-import { z } from "zod";
 
 export async function analyzeFileName(prevState: any, formData: FormData) {
   const files = formData.get("files");
-  console.log({ files });
 
   if (!files) {
     throw new Error("No files provided");
