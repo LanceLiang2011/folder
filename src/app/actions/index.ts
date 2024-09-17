@@ -40,14 +40,14 @@ export async function analyzeFileName(prevState: any, formData: FormData) {
     "陕西省",
     "甘肃省",
     "青海省",
-    "内蒙古",
-    "广西",
-    "西藏",
-    "宁夏",
-    "新疆",
-    "香港",
-    "澳门",
     "台湾",
+    "内蒙古自治区",
+    "广西壮族自治区",
+    "西藏自治区",
+    "宁夏回族自治区",
+    "新疆维吾尔自治区",
+    "香港特别行政区",
+    "澳门特别行政区",
   ];
 
   filenames.forEach((filename: any) => {
