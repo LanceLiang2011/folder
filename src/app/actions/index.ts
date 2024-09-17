@@ -1,48 +1,47 @@
 "use server";
-import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 
 export async function analyzeFileName(prevState: any, formData: FormData) {
   const files = formData.get("files");
   console.log({ files });
 
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-  if (!OPENAI_API_KEY) {
-    throw new Error("Missing OpenAI API key in environment variables");
+  if (!files) {
+    throw new Error("No files provided");
   }
 
-  const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+  // Parse the files string to get an array of filenames
+  const filenames = JSON.parse(files.toString());
 
-  const OutcomeEvent = z.object({
-    location: z.string(),
-    people: z.string(),
-    cause: z.string(),
+  const events: any = [];
+
+  filenames.forEach((filename: any) => {
+    // Remove leading numbers (e.g., dates)
+    const nameWithoutNumbers = filename.replace(/^\d+/, "").trim();
+
+    // Split the remaining string by spaces
+    const parts = nameWithoutNumbers.split(/\s+/);
+
+    // Check if we have at least three parts
+    if (parts.length >= 3) {
+      const [location, people, cause] = parts;
+
+      events.push({
+        location: location,
+        people: people,
+        cause: cause,
+      });
+    } else {
+      // Handle cases where there are less than 3 parts
+      console.warn(
+        `Filename "${filename}" does not have enough parts to extract data.`
+      );
+    }
   });
 
-  const OutcomeEventResponse = z.object({
-    events: z.array(OutcomeEvent),
-  });
+  const responseData = {
+    events: events,
+  };
 
-  const systemMessage =
-    "You will be given a list of filenames with date and location, followed by people involved, cause of the event in Chinese. Please extract location(Province name only), people involved and cause of the event in the JSON format.";
-
-  const completion = await openai.beta.chat.completions.parse({
-    model: "gpt-4o-2024-08-06",
-    messages: [
-      { role: "system", content: systemMessage },
-      {
-        role: "user",
-        content: files?.toString() || "",
-      },
-    ],
-    response_format: zodResponseFormat(OutcomeEventResponse, "events"),
-  });
-
-  const responseText = completion.choices[0]?.message.content;
-
-  console.log({ responseText });
-
-  return { message: responseText };
+  // Return the data as a JSON string to keep the return data consistent
+  return { message: JSON.stringify(responseData) };
 }
