@@ -67,7 +67,10 @@ export async function analyzeFileName(prevState: any, formData: FormData) {
       if (!province) {
         // Remove suffixes like "省", "市", "自治区", "特别行政区" for matching
         for (let prov of provinces) {
-          let provShort = prov.replace(/(省|市|自治区|特别行政区)$/, "");
+          let provShort = prov.replace(
+            /(省|市|自治区|特别行政区|维吾尔自治区|壮族自治区|回族自治区)$/,
+            ""
+          );
           if (locationFull.startsWith(provShort)) {
             province = prov;
             break;
